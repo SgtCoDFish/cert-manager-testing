@@ -1,43 +1,10 @@
+# THIS FILE HAS BEEN AUTOMATICALLY GENERATED
+# Don't manually edit it; instead edit the "cmrel" tool which generated it
+# Generated with: /home/ashley/workspace/cert-manager-release/bin/cmrel generate-tests --mode previous
 periodics:
   - agent: kubernetes
     annotations:
-      description: Runs 'bazel test --jobs=1 //...'
-      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
-      testgrid-create-test-group: "true"
-      testgrid-dashboards: jetstack-cert-manager-previous
-    decorate: true
-    extra_refs:
-      - base_ref: release-1.8 # still required on 1.8 because some tests were only present in bazel
-        org: cert-manager
-        repo: cert-manager
-    interval: 2h
-    labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
-      preset-service-account: "true"
-    name: ci-cert-manager-previous-bazel
-    spec:
-      containers:
-        - args:
-            - runner
-            - bazel
-            - test
-            - --jobs=1
-            - //hack/...
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
-          resources:
-            requests:
-              cpu: 1
-              memory: 2Gi
-      dnsConfig:
-        options:
-          - name: ndots
-            value: "1"
-  # Re-add bazel-experimental periodics once Bazel v5.0.0 is released and we have
-  # a bazelbuild image with that https://github.com/bazelbuild/bazel/releases
-  - agent: kubernetes
-    annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.18 cluster
+      description: Runs (mostly bazel) tests in the ./hack directory
       testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-previous
@@ -50,49 +17,61 @@ periodics:
     labels:
       preset-bazel-remote-cache-enabled: "true"
       preset-bazel-scratch-dir: "true"
-      preset-cloudflare-credentials: "true"
-      preset-dind-enabled: "true"
-      preset-disable-alpha-enable-output-formats-feature-gates: "true"
-      preset-ginkgo-skip-default: "true"
       preset-service-account: "true"
-    name: ci-cert-manager-previous-e2e-v1-18
+    max_concurrency: 8
+    name: ci-cert-manager-previous-bazel-hack
     spec:
       containers:
         - args:
             - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.18"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
+            - bazel
+            - test
+            - --jobs=1
+            - //hack/...
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
           resources:
             requests:
-              cpu: 3500m
-              memory: 12Gi
-          securityContext:
-            capabilities:
-              add:
-                - SYS_ADMIN
-            privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
+              cpu: "1"
+              memory: 2Gi
       dnsConfig:
         options:
           - name: ndots
             value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
+  - agent: kubernetes
+    annotations:
+      description: Runs unit and integration tests and verification scripts
+      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
+      testgrid-create-test-group: "true"
+      testgrid-dashboards: jetstack-cert-manager-previous
+    decorate: true
+    extra_refs:
+      - base_ref: release-1.8
+        org: cert-manager
+        repo: cert-manager
+    interval: 2h
+    labels:
+      preset-make-volumes: "true"
+      preset-service-account: "true"
+    max_concurrency: 8
+    name: ci-cert-manager-previous-make-test
+    spec:
+      containers:
+        - args:
+            - runner
+            - make
+            - -j
+            - vendor-go
+            - ci-presubmit
+            - test-ci
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
   - agent: kubernetes
     annotations:
       description: Runs the end-to-end test suite against a Kubernetes v1.19 cluster
@@ -106,23 +85,26 @@ periodics:
         repo: cert-manager
     interval: 2h
     labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
       preset-cloudflare-credentials: "true"
+      preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-enable-all-feature-gates-disable-ssa: "true"
       preset-ginkgo-skip-default: "true"
+      preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
+    max_concurrency: 4
     name: ci-cert-manager-previous-e2e-v1-19
     spec:
       containers:
         - args:
             - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.19"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
+            - make
+            - -j
+            - vendor-go
+            - e2e-ci
+            - K8S_VERSION=1.19
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
           resources:
             requests:
               cpu: 3500m
@@ -132,25 +114,10 @@ periodics:
               add:
                 - SYS_ADMIN
             privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
       dnsConfig:
         options:
           - name: ndots
             value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
   - agent: kubernetes
     annotations:
       description: Runs the end-to-end test suite against a Kubernetes v1.20 cluster
@@ -164,23 +131,26 @@ periodics:
         repo: cert-manager
     interval: 2h
     labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
       preset-cloudflare-credentials: "true"
+      preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-enable-all-feature-gates-disable-ssa: "true"
       preset-ginkgo-skip-default: "true"
+      preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
+    max_concurrency: 4
     name: ci-cert-manager-previous-e2e-v1-20
     spec:
       containers:
         - args:
             - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.20"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
+            - make
+            - -j
+            - vendor-go
+            - e2e-ci
+            - K8S_VERSION=1.20
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
           resources:
             requests:
               cpu: 3500m
@@ -190,25 +160,10 @@ periodics:
               add:
                 - SYS_ADMIN
             privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
       dnsConfig:
         options:
           - name: ndots
             value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
   - agent: kubernetes
     annotations:
       description: Runs the end-to-end test suite against a Kubernetes v1.21 cluster
@@ -222,23 +177,26 @@ periodics:
         repo: cert-manager
     interval: 2h
     labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
       preset-cloudflare-credentials: "true"
+      preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-enable-all-feature-gates-disable-ssa: "true"
       preset-ginkgo-skip-default: "true"
+      preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
+    max_concurrency: 4
     name: ci-cert-manager-previous-e2e-v1-21
     spec:
       containers:
         - args:
             - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.21"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
+            - make
+            - -j
+            - vendor-go
+            - e2e-ci
+            - K8S_VERSION=1.21
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
           resources:
             requests:
               cpu: 3500m
@@ -248,25 +206,10 @@ periodics:
               add:
                 - SYS_ADMIN
             privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
       dnsConfig:
         options:
           - name: ndots
             value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
   - agent: kubernetes
     annotations:
       description: Runs the end-to-end test suite against a Kubernetes v1.22 cluster
@@ -280,23 +223,26 @@ periodics:
         repo: cert-manager
     interval: 2h
     labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
       preset-cloudflare-credentials: "true"
+      preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-enable-all-feature-gates: "true"
       preset-ginkgo-skip-default: "true"
+      preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
+    max_concurrency: 4
     name: ci-cert-manager-previous-e2e-v1-22
     spec:
       containers:
         - args:
             - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.22"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
+            - make
+            - -j
+            - vendor-go
+            - e2e-ci
+            - K8S_VERSION=1.22
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
           resources:
             requests:
               cpu: 3500m
@@ -306,25 +252,10 @@ periodics:
               add:
                 - SYS_ADMIN
             privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
       dnsConfig:
         options:
           - name: ndots
             value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
   - agent: kubernetes
     annotations:
       description: Runs the end-to-end test suite against a Kubernetes v1.23 cluster
@@ -338,23 +269,26 @@ periodics:
         repo: cert-manager
     interval: 2h
     labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
       preset-cloudflare-credentials: "true"
+      preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-enable-all-feature-gates: "true"
       preset-ginkgo-skip-default: "true"
+      preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
+    max_concurrency: 4
     name: ci-cert-manager-previous-e2e-v1-23
     spec:
       containers:
         - args:
             - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.23"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
+            - make
+            - -j
+            - vendor-go
+            - e2e-ci
+            - K8S_VERSION=1.23
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
           resources:
             requests:
               cpu: 3500m
@@ -364,27 +298,10 @@ periodics:
               add:
                 - SYS_ADMIN
             privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
       dnsConfig:
         options:
           - name: ndots
             value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
-  # This job uses make to invoke end-to-end tests as support for running jobs against 1.24
-  # was only backported into the make based e2e infra in the release-1.8 branch.
   - agent: kubernetes
     annotations:
       description: Runs the end-to-end test suite against a Kubernetes v1.24 cluster
@@ -398,15 +315,15 @@ periodics:
         repo: cert-manager
     interval: 2h
     labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
       preset-cloudflare-credentials: "true"
       preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-enable-all-feature-gates: "true"
       preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
+    max_concurrency: 4
     name: ci-cert-manager-previous-e2e-v1-24
     spec:
       containers:
@@ -431,11 +348,9 @@ periodics:
         options:
           - name: ndots
             value: "1"
-  # This test runs Venafi (VaaS and TPP) tests once every 12hrs.
-  # This is the only CI test job that runs those.
   - agent: kubernetes
     annotations:
-      description: Runs Venafi (VaaS and TPP) e2e tests against Kubernetes v1.22 cluster
+      description: Runs Venafi (VaaS and TPP) e2e tests
       testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-previous
@@ -446,23 +361,26 @@ periodics:
         repo: cert-manager
     interval: 12h
     labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
+      preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-ginkgo-focus-venafi: "true"
+      preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
       preset-venafi-cloud-credentials: "true"
       preset-venafi-tpp-credentials: "true"
-    name: ci-cert-manager-previous-venafi
+    max_concurrency: 4
+    name: ci-cert-manager-previous-e2e-v1-24-issuers-venafi
     spec:
       containers:
         - args:
             - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.23"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
+            - make
+            - -j
+            - vendor-go
+            - e2e-ci
+            - K8S_VERSION=1.24
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
           resources:
             requests:
               cpu: 3500m
@@ -472,55 +390,38 @@ periodics:
               add:
                 - SYS_ADMIN
             privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
       dnsConfig:
         options:
           - name: ndots
             value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
   - agent: kubernetes
     annotations:
-      description: Runs cert-manager upgrade test every 8 hours
+      description: Runs cert-manager upgrade from latest published release
       testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-previous
     decorate: true
-    # extra refs specify what repo should be cloned
     extra_refs:
       - base_ref: release-1.8
         org: cert-manager
         repo: cert-manager
     interval: 8h
     labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
+      preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
+      preset-make-volumes: "true"
       preset-service-account: "true"
-    name: ci-cert-manager-previous-upgrade
+    max_concurrency: 4
+    name: ci-cert-manager-previous-e2e-v1-24-upgrade
     spec:
       containers:
         - args:
             - runner
             - make
-            - cluster
-            - verify_upgrade
-          env:
-            - name: K8S_VERSION
-              value: "1.23"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
+            - K8S_VERSION=1.24
+            - vendor-go
+            - test-upgrade
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
           resources:
             requests:
               cpu: 3500m
@@ -530,378 +431,13 @@ periodics:
               add:
                 - SYS_ADMIN
             privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
       dnsConfig:
         options:
           - name: ndots
             value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
   - agent: kubernetes
     annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.18 cluster with all feature gates disabled
-      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
-      testgrid-create-test-group: "true"
-      testgrid-dashboards: jetstack-cert-manager-previous
-    decorate: true
-    extra_refs:
-      - base_ref: release-1.8
-        org: cert-manager
-        repo: cert-manager
-    interval: 24h
-    labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
-      preset-cloudflare-credentials: "true"
-      preset-dind-enabled: "true"
-      preset-disable-all-alpha-beta-feature-gates: "true"
-      preset-retry-flakey-tests: "true"
-      preset-service-account: "true"
-    name: ci-cert-manager-previous-e2e-feature-gates-disabled-v1-18
-    spec:
-      containers:
-        - args:
-            - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.18"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
-          resources:
-            requests:
-              cpu: 3500m
-              memory: 12Gi
-          securityContext:
-            capabilities:
-              add:
-                - SYS_ADMIN
-            privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
-      dnsConfig:
-        options:
-          - name: ndots
-            value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
-  - agent: kubernetes
-    annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.19 cluster with all feature gates disabled
-      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
-      testgrid-create-test-group: "true"
-      testgrid-dashboards: jetstack-cert-manager-previous
-    decorate: true
-    extra_refs:
-      - base_ref: release-1.8
-        org: cert-manager
-        repo: cert-manager
-    interval: 24h
-    labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
-      preset-cloudflare-credentials: "true"
-      preset-dind-enabled: "true"
-      preset-disable-all-alpha-beta-feature-gates: "true"
-      preset-retry-flakey-tests: "true"
-      preset-service-account: "true"
-    name: ci-cert-manager-previous-e2e-feature-gates-disabled-v1-19
-    spec:
-      containers:
-        - args:
-            - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.19"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
-          resources:
-            requests:
-              cpu: 3500m
-              memory: 12Gi
-          securityContext:
-            capabilities:
-              add:
-                - SYS_ADMIN
-            privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
-      dnsConfig:
-        options:
-          - name: ndots
-            value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
-  - agent: kubernetes
-    annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.20 cluster with all feature gates disabled
-      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
-      testgrid-create-test-group: "true"
-      testgrid-dashboards: jetstack-cert-manager-previous
-    decorate: true
-    extra_refs:
-      - base_ref: release-1.8
-        org: cert-manager
-        repo: cert-manager
-    interval: 24h
-    labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
-      preset-cloudflare-credentials: "true"
-      preset-dind-enabled: "true"
-      preset-disable-all-alpha-beta-feature-gates: "true"
-      preset-retry-flakey-tests: "true"
-      preset-service-account: "true"
-    name: ci-cert-manager-previous-e2e-feature-gates-disabled-v1-20
-    spec:
-      containers:
-        - args:
-            - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.20"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
-          resources:
-            requests:
-              cpu: 3500m
-              memory: 12Gi
-          securityContext:
-            capabilities:
-              add:
-                - SYS_ADMIN
-            privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
-      dnsConfig:
-        options:
-          - name: ndots
-            value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
-  - agent: kubernetes
-    annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.21 cluster with all feature gates disabled
-      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
-      testgrid-create-test-group: "true"
-      testgrid-dashboards: jetstack-cert-manager-previous
-    decorate: true
-    extra_refs:
-      - base_ref: release-1.8
-        org: cert-manager
-        repo: cert-manager
-    interval: 24h
-    labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
-      preset-cloudflare-credentials: "true"
-      preset-dind-enabled: "true"
-      preset-disable-all-alpha-beta-feature-gates: "true"
-      preset-retry-flakey-tests: "true"
-      preset-service-account: "true"
-    name: ci-cert-manager-previous-e2e-feature-gates-disabled-v1-21
-    spec:
-      containers:
-        - args:
-            - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.21"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
-          resources:
-            requests:
-              cpu: 3500m
-              memory: 12Gi
-          securityContext:
-            capabilities:
-              add:
-                - SYS_ADMIN
-            privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
-      dnsConfig:
-        options:
-          - name: ndots
-            value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
-  - agent: kubernetes
-    annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.22 cluster with all feature gates disabled
-      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
-      testgrid-create-test-group: "true"
-      testgrid-dashboards: jetstack-cert-manager-previous
-    decorate: true
-    extra_refs:
-      - base_ref: release-1.8
-        org: cert-manager
-        repo: cert-manager
-    interval: 24h
-    labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
-      preset-cloudflare-credentials: "true"
-      preset-dind-enabled: "true"
-      preset-disable-all-alpha-beta-feature-gates: "true"
-      preset-retry-flakey-tests: "true"
-      preset-service-account: "true"
-    name: ci-cert-manager-previous-e2e-feature-gates-disabled-v1-22
-    spec:
-      containers:
-        - args:
-            - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.22"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
-          resources:
-            requests:
-              cpu: 3500m
-              memory: 12Gi
-          securityContext:
-            capabilities:
-              add:
-                - SYS_ADMIN
-            privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
-      dnsConfig:
-        options:
-          - name: ndots
-            value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
-  - agent: kubernetes
-    annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.23 cluster with all feature gates disabled
-      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
-      testgrid-create-test-group: "true"
-      testgrid-dashboards: jetstack-cert-manager-previous
-    decorate: true
-    extra_refs:
-      - base_ref: release-1.8
-        org: cert-manager
-        repo: cert-manager
-    interval: 24h
-    labels:
-      preset-bazel-remote-cache-enabled: "true"
-      preset-bazel-scratch-dir: "true"
-      preset-cloudflare-credentials: "true"
-      preset-dind-enabled: "true"
-      preset-disable-all-alpha-beta-feature-gates: "true"
-      preset-retry-flakey-tests: "true"
-      preset-service-account: "true"
-    name: ci-cert-manager-previous-e2e-feature-gates-disabled-v1-23
-    spec:
-      containers:
-        - args:
-            - runner
-            - devel/ci-run-e2e.sh
-          env:
-            - name: K8S_VERSION
-              value: "1.23"
-          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20210831-4cf7b0b-4.2.1
-          resources:
-            requests:
-              cpu: 3500m
-              memory: 12Gi
-          securityContext:
-            capabilities:
-              add:
-                - SYS_ADMIN
-            privileged: true
-          volumeMounts:
-            - mountPath: /lib/modules
-              name: modules
-              readOnly: true
-            - mountPath: /sys/fs/cgroup
-              name: cgroup
-      dnsConfig:
-        options:
-          - name: ndots
-            value: "1"
-      volumes:
-        - hostPath:
-            path: /lib/modules
-            type: Directory
-          name: modules
-        - hostPath:
-            path: /sys/fs/cgroup
-            type: Directory
-          name: cgroup
-  # This job uses make to invoke end-to-end tests as support for running jobs against 1.24
-  # was only backported into the make based e2e infra in the release-1.8 branch.
-  - agent: kubernetes
-    annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.24 cluster with all feature gates disabled
+      description: Runs the E2E tests with all feature gates disabled
       testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-previous
@@ -916,10 +452,242 @@ periodics:
       preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-disable-all-alpha-beta-feature-gates: "true"
+      preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
       preset-retry-flakey-tests: "true"
       preset-service-account: "true"
-    name: ci-cert-manager-previous-e2e-feature-gates-disabled-v1-24
+    max_concurrency: 4
+    name: ci-cert-manager-previous-e2e-v1-19-feature-gates-disabled
+    spec:
+      containers:
+        - args:
+            - runner
+            - make
+            - -j
+            - vendor-go
+            - e2e-ci
+            - K8S_VERSION=1.19
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
+          resources:
+            requests:
+              cpu: 3500m
+              memory: 12Gi
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN
+            privileged: true
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+  - agent: kubernetes
+    annotations:
+      description: Runs the E2E tests with all feature gates disabled
+      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
+      testgrid-create-test-group: "true"
+      testgrid-dashboards: jetstack-cert-manager-previous
+    decorate: true
+    extra_refs:
+      - base_ref: release-1.8
+        org: cert-manager
+        repo: cert-manager
+    interval: 24h
+    labels:
+      preset-cloudflare-credentials: "true"
+      preset-default-e2e-volumes: "true"
+      preset-dind-enabled: "true"
+      preset-disable-all-alpha-beta-feature-gates: "true"
+      preset-ginkgo-skip-default: "true"
+      preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
+      preset-service-account: "true"
+    max_concurrency: 4
+    name: ci-cert-manager-previous-e2e-v1-20-feature-gates-disabled
+    spec:
+      containers:
+        - args:
+            - runner
+            - make
+            - -j
+            - vendor-go
+            - e2e-ci
+            - K8S_VERSION=1.20
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
+          resources:
+            requests:
+              cpu: 3500m
+              memory: 12Gi
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN
+            privileged: true
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+  - agent: kubernetes
+    annotations:
+      description: Runs the E2E tests with all feature gates disabled
+      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
+      testgrid-create-test-group: "true"
+      testgrid-dashboards: jetstack-cert-manager-previous
+    decorate: true
+    extra_refs:
+      - base_ref: release-1.8
+        org: cert-manager
+        repo: cert-manager
+    interval: 24h
+    labels:
+      preset-cloudflare-credentials: "true"
+      preset-default-e2e-volumes: "true"
+      preset-dind-enabled: "true"
+      preset-disable-all-alpha-beta-feature-gates: "true"
+      preset-ginkgo-skip-default: "true"
+      preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
+      preset-service-account: "true"
+    max_concurrency: 4
+    name: ci-cert-manager-previous-e2e-v1-21-feature-gates-disabled
+    spec:
+      containers:
+        - args:
+            - runner
+            - make
+            - -j
+            - vendor-go
+            - e2e-ci
+            - K8S_VERSION=1.21
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
+          resources:
+            requests:
+              cpu: 3500m
+              memory: 12Gi
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN
+            privileged: true
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+  - agent: kubernetes
+    annotations:
+      description: Runs the E2E tests with all feature gates disabled
+      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
+      testgrid-create-test-group: "true"
+      testgrid-dashboards: jetstack-cert-manager-previous
+    decorate: true
+    extra_refs:
+      - base_ref: release-1.8
+        org: cert-manager
+        repo: cert-manager
+    interval: 24h
+    labels:
+      preset-cloudflare-credentials: "true"
+      preset-default-e2e-volumes: "true"
+      preset-dind-enabled: "true"
+      preset-disable-all-alpha-beta-feature-gates: "true"
+      preset-ginkgo-skip-default: "true"
+      preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
+      preset-service-account: "true"
+    max_concurrency: 4
+    name: ci-cert-manager-previous-e2e-v1-22-feature-gates-disabled
+    spec:
+      containers:
+        - args:
+            - runner
+            - make
+            - -j
+            - vendor-go
+            - e2e-ci
+            - K8S_VERSION=1.22
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
+          resources:
+            requests:
+              cpu: 3500m
+              memory: 12Gi
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN
+            privileged: true
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+  - agent: kubernetes
+    annotations:
+      description: Runs the E2E tests with all feature gates disabled
+      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
+      testgrid-create-test-group: "true"
+      testgrid-dashboards: jetstack-cert-manager-previous
+    decorate: true
+    extra_refs:
+      - base_ref: release-1.8
+        org: cert-manager
+        repo: cert-manager
+    interval: 24h
+    labels:
+      preset-cloudflare-credentials: "true"
+      preset-default-e2e-volumes: "true"
+      preset-dind-enabled: "true"
+      preset-disable-all-alpha-beta-feature-gates: "true"
+      preset-ginkgo-skip-default: "true"
+      preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
+      preset-service-account: "true"
+    max_concurrency: 4
+    name: ci-cert-manager-previous-e2e-v1-23-feature-gates-disabled
+    spec:
+      containers:
+        - args:
+            - runner
+            - make
+            - -j
+            - vendor-go
+            - e2e-ci
+            - K8S_VERSION=1.23
+          image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
+          resources:
+            requests:
+              cpu: 3500m
+              memory: 12Gi
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN
+            privileged: true
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+  - agent: kubernetes
+    annotations:
+      description: Runs the E2E tests with all feature gates disabled
+      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
+      testgrid-create-test-group: "true"
+      testgrid-dashboards: jetstack-cert-manager-previous
+    decorate: true
+    extra_refs:
+      - base_ref: release-1.8
+        org: cert-manager
+        repo: cert-manager
+    interval: 24h
+    labels:
+      preset-cloudflare-credentials: "true"
+      preset-default-e2e-volumes: "true"
+      preset-dind-enabled: "true"
+      preset-disable-all-alpha-beta-feature-gates: "true"
+      preset-ginkgo-skip-default: "true"
+      preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
+      preset-service-account: "true"
+    max_concurrency: 4
+    name: ci-cert-manager-previous-e2e-v1-24-feature-gates-disabled
     spec:
       containers:
         - args:

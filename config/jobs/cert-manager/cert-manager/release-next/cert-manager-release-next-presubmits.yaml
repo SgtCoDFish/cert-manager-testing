@@ -1,45 +1,14 @@
 # THIS FILE HAS BEEN AUTOMATICALLY GENERATED
 # Don't manually edit it; instead edit the "cmrel" tool which generated it
-# Generated with: /home/ashley/workspace/cert-manager-release/bin/cmrel generate-tests --mode previous
+# Generated with: /home/ashley/workspace/cert-manager-release/bin/cmrel generate-tests --mode next
 presubmits:
   cert-manager/cert-manager:
     - agent: kubernetes
       always_run: true
       annotations:
-        description: Runs (mostly bazel) tests in the ./hack directory
-      branches:
-        - release-1.8
-      decorate: true
-      labels:
-        preset-bazel-remote-cache-enabled: "true"
-        preset-bazel-scratch-dir: "true"
-        preset-service-account: "true"
-      max_concurrency: 8
-      name: pull-cert-manager-bazel-hack
-      optional: false
-      spec:
-        containers:
-          - args:
-              - runner
-              - bazel
-              - test
-              - --jobs=1
-              - //hack/...
-            image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
-            resources:
-              requests:
-                cpu: "1"
-                memory: 2Gi
-        dnsConfig:
-          options:
-            - name: ndots
-              value: "1"
-    - agent: kubernetes
-      always_run: true
-      annotations:
         description: Runs unit and integration tests and verification scripts
       branches:
-        - release-1.8
+        - release-1.9
       decorate: true
       labels:
         preset-make-volumes: "true"
@@ -70,7 +39,7 @@ presubmits:
       annotations:
         description: Verifies the Helm chart passes linting checks
       branches:
-        - release-1.8
+        - release-1.9
       decorate: true
       labels:
         preset-dind-enabled: "true"
@@ -100,51 +69,9 @@ presubmits:
     - agent: kubernetes
       always_run: false
       annotations:
-        description: Runs the end-to-end test suite against a Kubernetes v1.19 cluster
-      branches:
-        - release-1.8
-      decorate: true
-      labels:
-        preset-cloudflare-credentials: "true"
-        preset-default-e2e-volumes: "true"
-        preset-dind-enabled: "true"
-        preset-enable-all-feature-gates-disable-ssa: "true"
-        preset-ginkgo-skip-default: "true"
-        preset-make-volumes: "true"
-        preset-retry-flakey-tests: "true"
-        preset-service-account: "true"
-      max_concurrency: 4
-      name: pull-cert-manager-e2e-v1-19
-      optional: true
-      spec:
-        containers:
-          - args:
-              - runner
-              - make
-              - -j
-              - vendor-go
-              - e2e-ci
-              - K8S_VERSION=1.19
-            image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
-            resources:
-              requests:
-                cpu: 3500m
-                memory: 12Gi
-            securityContext:
-              capabilities:
-                add:
-                  - SYS_ADMIN
-              privileged: true
-        dnsConfig:
-          options:
-            - name: ndots
-              value: "1"
-    - agent: kubernetes
-      always_run: false
-      annotations:
         description: Runs the end-to-end test suite against a Kubernetes v1.20 cluster
       branches:
-        - release-1.8
+        - release-1.9
       decorate: true
       labels:
         preset-cloudflare-credentials: "true"
@@ -186,7 +113,7 @@ presubmits:
       annotations:
         description: Runs the end-to-end test suite against a Kubernetes v1.21 cluster
       branches:
-        - release-1.8
+        - release-1.9
       decorate: true
       labels:
         preset-cloudflare-credentials: "true"
@@ -228,7 +155,7 @@ presubmits:
       annotations:
         description: Runs the end-to-end test suite against a Kubernetes v1.22 cluster
       branches:
-        - release-1.8
+        - release-1.9
       decorate: true
       labels:
         preset-cloudflare-credentials: "true"
@@ -270,7 +197,7 @@ presubmits:
       annotations:
         description: Runs the end-to-end test suite against a Kubernetes v1.23 cluster
       branches:
-        - release-1.8
+        - release-1.9
       decorate: true
       labels:
         preset-cloudflare-credentials: "true"
@@ -312,7 +239,7 @@ presubmits:
       annotations:
         description: Runs the end-to-end test suite against a Kubernetes v1.24 cluster
       branches:
-        - release-1.8
+        - release-1.9
       decorate: true
       labels:
         preset-cloudflare-credentials: "true"
@@ -354,7 +281,7 @@ presubmits:
       annotations:
         description: Runs cert-manager upgrade from latest published release
       branches:
-        - release-1.8
+        - release-1.9
       decorate: true
       labels:
         preset-default-e2e-volumes: "true"
@@ -391,7 +318,7 @@ presubmits:
       annotations:
         description: Runs the E2E tests with 'Venafi TPP' in name
       branches:
-        - release-1.8
+        - release-1.9
       decorate: true
       labels:
         preset-default-e2e-volumes: "true"
@@ -432,7 +359,7 @@ presubmits:
       annotations:
         description: Runs the E2E tests with 'Venafi Cloud' in name
       branches:
-        - release-1.8
+        - release-1.9
       decorate: true
       labels:
         preset-default-e2e-volumes: "true"
@@ -473,7 +400,7 @@ presubmits:
       annotations:
         description: Runs the E2E tests with all feature gates disabled
       branches:
-        - release-1.8
+        - release-1.9
       decorate: true
       labels:
         preset-cloudflare-credentials: "true"

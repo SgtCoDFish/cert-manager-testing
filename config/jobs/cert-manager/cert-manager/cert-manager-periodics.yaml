@@ -1,7 +1,11 @@
+# THIS FILE HAS BEEN AUTOMATICALLY GENERATED
+# Don't manually edit it; instead edit the "cmrel" tool which generated it
+# Generated with: /home/ashley/workspace/cert-manager-release/bin/cmrel generate-tests --mode current
 periodics:
   - agent: kubernetes
     annotations:
       description: Runs unit and integration tests and verification scripts
+      testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-master
     decorate: true
@@ -13,6 +17,7 @@ periodics:
     labels:
       preset-make-volumes: "true"
       preset-service-account: "true"
+    max_concurrency: 8
     name: ci-cert-manager-make-test
     spec:
       containers:
@@ -26,7 +31,7 @@ periodics:
           image: eu.gcr.io/jetstack-build-infra-images/bazelbuild:20220512-b6ea825-4.2.1
           resources:
             requests:
-              cpu: 2
+              cpu: "2"
               memory: 4Gi
       dnsConfig:
         options:
@@ -51,7 +56,9 @@ periodics:
       preset-enable-all-feature-gates-disable-ssa: "true"
       preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
+    max_concurrency: 4
     name: ci-cert-manager-e2e-v1-20
     spec:
       containers:
@@ -95,7 +102,9 @@ periodics:
       preset-enable-all-feature-gates-disable-ssa: "true"
       preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
+    max_concurrency: 4
     name: ci-cert-manager-e2e-v1-21
     spec:
       containers:
@@ -139,7 +148,9 @@ periodics:
       preset-enable-all-feature-gates: "true"
       preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
+    max_concurrency: 4
     name: ci-cert-manager-e2e-v1-22
     spec:
       containers:
@@ -183,7 +194,9 @@ periodics:
       preset-enable-all-feature-gates: "true"
       preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
+    max_concurrency: 4
     name: ci-cert-manager-e2e-v1-23
     spec:
       containers:
@@ -227,7 +240,9 @@ periodics:
       preset-enable-all-feature-gates: "true"
       preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
+    max_concurrency: 4
     name: ci-cert-manager-e2e-v1-24
     spec:
       containers:
@@ -252,11 +267,9 @@ periodics:
         options:
           - name: ndots
             value: "1"
-  # This test runs Venafi (VaaS and TPP) tests once every 12hrs.
-  # This is the only CI test job that runs those.
   - agent: kubernetes
     annotations:
-      description: Runs Venafi (VaaS and TPP) e2e tests against Kubernetes v1.24 cluster
+      description: Runs Venafi (VaaS and TPP) e2e tests
       testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-master
@@ -271,10 +284,12 @@ periodics:
       preset-dind-enabled: "true"
       preset-ginkgo-focus-venafi: "true"
       preset-make-volumes: "true"
+      preset-retry-flakey-tests: "true"
       preset-service-account: "true"
       preset-venafi-cloud-credentials: "true"
       preset-venafi-tpp-credentials: "true"
-    name: ci-cert-manager-venafi
+    max_concurrency: 4
+    name: ci-cert-manager-e2e-v1-24-issuers-venafi
     spec:
       containers:
         - args:
@@ -300,12 +315,11 @@ periodics:
             value: "1"
   - agent: kubernetes
     annotations:
-      description: Runs cert-manager upgrade test every 8 hours
+      description: Runs cert-manager upgrade from latest published release
       testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-master
     decorate: true
-    # extra refs specify what repo should be cloned
     extra_refs:
       - base_ref: master
         org: cert-manager
@@ -316,7 +330,8 @@ periodics:
       preset-dind-enabled: "true"
       preset-make-volumes: "true"
       preset-service-account: "true"
-    name: ci-cert-manager-upgrade
+    max_concurrency: 4
+    name: ci-cert-manager-e2e-v1-24-upgrade
     spec:
       containers:
         - args:
@@ -339,59 +354,9 @@ periodics:
         options:
           - name: ndots
             value: "1"
-  # TODO: find a permanent home for the AWS periodics and reinstate this job
-  # - name: aws-tests
-  #   interval: 48h
-  #   agent: kubernetes
-  #   decorate: true
-  #   extra_refs:            # Periodic job doesn't clone any repo by default, needs to be added explicitly
-  #     - org: cert-manager
-  #       repo: test-infra
-  #       base_ref: main
-  #     - org: cert-manager
-  #       repo: cert-manager
-  #       base_ref: master
-  #   annotations:
-  #     testgrid-create-test-group: 'true'
-  #     testgrid-dashboards: jetstack-cert-manager-master
-  #     testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
-  #     description: Runs the end-to-end test suite against a EKS cluster
-  #   labels:
-  #     preset-service-account: "true"
-  #     preset-dind-enabled: "true"
-  #     preset-bazel-remote-cache-enabled: "true"
-  #     preset-bazel-scratch-dir: "true"
-  #     preset-aws-credentials: "true"
-  #     preset-ginkgo-focus-http01-ingress: "true"
-  #   spec:
-  #     containers:
-  #     - image: eu.gcr.io/jetstack-build-infra-images/golang-aws@sha256:1f330e4c9552ca383d157067b73fb0e090b64b0777939fd59e58b60e06020d66
-  #       args:
-  #       - bash
-  #       - -c
-  #       - |
-  #         set -euo && \
-  #         ls && \
-  #         pwd && \
-  #         cd /home/prow/go/src/github.com/cert-manager/test-infra/aws && \
-  #         terraform init && \
-  #         trap 'terraform destroy -auto-approve' ERR && \
-  #         terraform apply -auto-approve && \
-  #         ls && \
-  #         pwd && \
-  #         cd /home && \
-  #         ls && \
-  #         cd /home/prow/go/src/github.com/cert-manager/cert-manager && \
-  #         ./devel/run-e2e.sh --acme-server-url=https://acme-staging-v02.api.letsencrypt.org/directory --ingress-controller-domain=aws.e2e-tests.cert-manager.io --testing-acme-email=cert-manager-dev-alerts@googlegroups.com --kubernetes-config=/home/prow/go/src/github.com/cert-manager/test-infra/aws/kubeconfig_cert-manager-cluster || true && \
-  #         cd /home/prow/go/src/github.com/cert-manager/test-infra/aws && \
-  #         terraform destroy -auto-approve;
-  #       resources:
-  #         requests:
-  #           cpu: 3500m
-  #           memory: 12Gi
   - agent: kubernetes
     annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.20 cluster with all feature gates disabled
+      description: Runs the E2E tests with all feature gates disabled
       testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-master
@@ -406,10 +371,12 @@ periodics:
       preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-disable-all-alpha-beta-feature-gates: "true"
+      preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
       preset-retry-flakey-tests: "true"
       preset-service-account: "true"
-    name: ci-cert-manager-e2e-feature-gates-disabled-v1-20
+    max_concurrency: 4
+    name: ci-cert-manager-e2e-v1-20-feature-gates-disabled
     spec:
       containers:
         - args:
@@ -435,7 +402,7 @@ periodics:
             value: "1"
   - agent: kubernetes
     annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.21 cluster with all feature gates disabled
+      description: Runs the E2E tests with all feature gates disabled
       testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-master
@@ -450,10 +417,12 @@ periodics:
       preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-disable-all-alpha-beta-feature-gates: "true"
+      preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
       preset-retry-flakey-tests: "true"
       preset-service-account: "true"
-    name: ci-cert-manager-e2e-feature-gates-disabled-v1-21
+    max_concurrency: 4
+    name: ci-cert-manager-e2e-v1-21-feature-gates-disabled
     spec:
       containers:
         - args:
@@ -479,7 +448,7 @@ periodics:
             value: "1"
   - agent: kubernetes
     annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.22 cluster with all feature gates disabled
+      description: Runs the E2E tests with all feature gates disabled
       testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-master
@@ -494,10 +463,12 @@ periodics:
       preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-disable-all-alpha-beta-feature-gates: "true"
+      preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
       preset-retry-flakey-tests: "true"
       preset-service-account: "true"
-    name: ci-cert-manager-e2e-feature-gates-disabled-v1-22
+    max_concurrency: 4
+    name: ci-cert-manager-e2e-v1-22-feature-gates-disabled
     spec:
       containers:
         - args:
@@ -523,7 +494,7 @@ periodics:
             value: "1"
   - agent: kubernetes
     annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.23 cluster with all feature gates disabled
+      description: Runs the E2E tests with all feature gates disabled
       testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-master
@@ -538,10 +509,12 @@ periodics:
       preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-disable-all-alpha-beta-feature-gates: "true"
+      preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
       preset-retry-flakey-tests: "true"
       preset-service-account: "true"
-    name: ci-cert-manager-e2e-feature-gates-disabled-v1-23
+    max_concurrency: 4
+    name: ci-cert-manager-e2e-v1-23-feature-gates-disabled
     spec:
       containers:
         - args:
@@ -567,7 +540,7 @@ periodics:
             value: "1"
   - agent: kubernetes
     annotations:
-      description: Runs the end-to-end test suite against a Kubernetes v1.24 cluster with all feature gates disabled
+      description: Runs the E2E tests with all feature gates disabled
       testgrid-alert-email: cert-manager-dev-alerts@googlegroups.com
       testgrid-create-test-group: "true"
       testgrid-dashboards: jetstack-cert-manager-master
@@ -582,10 +555,12 @@ periodics:
       preset-default-e2e-volumes: "true"
       preset-dind-enabled: "true"
       preset-disable-all-alpha-beta-feature-gates: "true"
+      preset-ginkgo-skip-default: "true"
       preset-make-volumes: "true"
       preset-retry-flakey-tests: "true"
       preset-service-account: "true"
-    name: ci-cert-manager-e2e-feature-gates-disabled-v1-24
+    max_concurrency: 4
+    name: ci-cert-manager-e2e-v1-24-feature-gates-disabled
     spec:
       containers:
         - args:
